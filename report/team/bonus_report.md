@@ -21,7 +21,7 @@
 - **File report + run id:**
   - `src/reports/bonus_benchmark_public.json`, `src/reports/bonus_benchmark_adversarial.json`, `src/reports/bonus_verifier.json`.
   - Override minh họa: `R-swarm_verified-C-002-s55` (public), `R-swarm_verified-B-02-s55` (đối kháng).
-  - Commit chứa code bonus: [điền sau khi commit].
+  - Commit chứa code bonus: `02bda52` (`bonus(B3): swarm_verified with code verifier, adversarial cases and report`), đã merge vào `main` qua PR #7.
 - **Bộ đối kháng:** `src/bonus/cases.jsonl` và `src/bonus/world.json`, 12 claim, mỗi claim có `label_note` giải thích nhãn theo `business_rules.md`. Nhãn viết tay, không sinh bằng `compensation.quote`. Các tình huống: ticket nói quá (B-01), nói thiếu (B-02), ca biên trễ đúng 3 ngày (B-03), nói dối hàng hỏng (B-04), nhiều con số trong một câu (B-05, B-06), đơn `in_transit` (B-07), đơn đã hoàn đủ (B-08), hỏng hàng đã verify kèm nói thiếu số ngày (B-09), thiếu `order_id` (B-10), prompt injection kèm con số (B-11), đơn của principal khác (B-12).
 
 ## Kết quả

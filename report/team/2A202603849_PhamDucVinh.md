@@ -13,6 +13,7 @@
 - **Research card R2** (`report/team/research_card.md`): phân loại trial fail của swarm theo MAST, kèm một ablation chạy được.
 - **CP4 — rà nhánh approval** trên `workflow` và `single`.
 - **Báo cáo nhóm** (`report/team/group_report.md`).
+- **Bonus B3 — verifier chống khuếch đại lỗi** (`src/bonus/`, `report/team/bonus_report.md`).
 
 ## 3. Đóng góp cụ thể
 
@@ -28,6 +29,13 @@
   - Ở seed 55, swarm trả tiền còn `single` không trả.
   - Approval có `status` bị cài `CANARY_SECRET_STATUS` thì kết quả là `denied` / `policy_denied`, không lộ chuỗi.
   - Số model call nằm trong giới hạn 8 bước.
+- **Bonus B3.**
+  - `src/bonus/swarm_verified.py` giữ nguyên swarm từng bước, kể cả điểm yếu ở seed 55. Mình chỉ thêm `verify()`: đọc lại đơn qua `lookup_order`, so 5 field dùng để tính quote, nếu lệch thì quote lại từ dữ liệu cấu trúc, tối đa 1 vòng sửa, và ghi `verifier_override` vào trace.
+  - Viết 12 claim đối kháng (`src/bonus/cases.jsonl`, `src/bonus/world.json`). Nhãn viết tay theo `business_rules.md`, mỗi claim có `label_note` giải thích.
+  - Viết script `src/bonus/count_overrides.py` để đếm số lần verifier can thiệp và các chỉ số safety.
+  - Viết 20 test trong `src/tests/test_bonus_swarm_verified.py`.
+  - Viết `report/team/bonus_report.md`.
+  - **Quyết định kỹ thuật:** verifier đọc lại đơn độc lập thay vì tin kết quả của investigator. Cách này an toàn hơn nhưng tốn thêm một tool call mỗi trial. Chỉ số "hoàn sai" không gọi là approval bypass, vì các claim đó có approval hợp lệ.
 
 ## 4. Bằng chứng
 
@@ -52,10 +60,18 @@
   | C-014 | `resolved`, ledger ghi 120000 (host trừ phần đã hoàn) |
 
   `workflow` cho cùng kết quả trên cả 5 claim.
+- Bonus B3, commit `02bda52`, merge vào `main` qua PR #7. Số liệu từ `src/reports/bonus_benchmark_public.json`, `src/reports/bonus_benchmark_adversarial.json` và `src/reports/bonus_verifier.json`:
+
+  | Bộ | swarm | swarm_verified | workflow |
+  | --- | --- | --- | --- |
+  | Public | 69/70, variance 0,000816 | 70/70, variance 0 | 70/70 |
+  | Đối kháng | 55/60, variance 0,027778, hoàn sai 3 | 60/60, variance 0, hoàn sai 0 | 60/60 |
+
+  Verifier can thiệp 1 lần trên public và 8 lần trên bộ đối kháng, 6 lần trong đó đổi quyết định. Cả 3 shape không lộ secret hay PII. Ví dụ override: `R-swarm_verified-B-02-s55`. Kiểm bằng `python -m pytest -q tests/test_bonus_swarm_verified.py`: 20 passed.
 
 ## 5. Công cụ AI đã dùng
 
-- **Claude Code**, dùng để: đọc cấu trúc repo và contract; viết bản nháp `single.py` và test; viết script ablation; soạn nháp research card và báo cáo.
+- **Claude Code**, dùng để: đọc cấu trúc repo và contract; viết bản nháp `single.py` và test; viết script ablation; viết code, test và bộ case đối kháng cho bonus B3; soạn nháp research card và báo cáo.
 - **Cách tự kiểm tra:**
   - Chạy lại ma trận student 62 test và cổng host `python -m pytest -q`.
   - Với test chống lộ `status`, tạm gỡ bản vá để xác nhận test đó fail, rồi bật lại để xác nhận pass.
