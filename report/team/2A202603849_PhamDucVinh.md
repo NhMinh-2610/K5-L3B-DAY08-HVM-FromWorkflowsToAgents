@@ -67,7 +67,7 @@
   | Public | 69/70, variance 0,000816 | 70/70, variance 0 | 70/70 |
   | Đối kháng | 55/60, variance 0,027778, hoàn sai 3 | 60/60, variance 0, hoàn sai 0 | 60/60 |
 
-  Verifier can thiệp 1 lần trên public và 8 lần trên bộ đối kháng, 6 lần trong đó đổi quyết định. Cả 3 shape không lộ secret hay PII. Ví dụ override: `R-swarm_verified-B-02-s55`. Kiểm bằng `python -m pytest -q tests/test_bonus_swarm_verified.py`: 20 passed.
+  Verifier can thiệp 1 lần trên public và 8 lần trên bộ đối kháng, trong đó 5 lần đổi quyết định trên bộ đối kháng. Cả 3 shape không lộ secret hay PII. Ví dụ override: `R-swarm_verified-B-02-s55`. Kiểm bằng `python -m pytest -q tests/test_bonus_swarm_verified.py`: 20 passed.
 
 ## 5. Công cụ AI đã dùng
 

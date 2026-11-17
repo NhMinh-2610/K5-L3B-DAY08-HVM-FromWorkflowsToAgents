@@ -193,7 +193,8 @@ Chi tiết đóng góp của từng thành viên nằm trong `TEAM.md` (bảng �
 - **MockLLM không phải model sản xuất.** Latency là `unavailable`. Cost là cost mô phỏng theo `pricing.yaml`, không phải hóa đơn API. Model call của `single` là để tính cost cho công bằng, không phản ánh chất lượng suy luận của một LLM thật.
 - **Lỗi của swarm được cài theo quy tắc `seed % 5 == 0`.** Ablation R2 chứng minh cơ chế gây lỗi, không ước lượng được tần suất. Mẫu nhỏ (70 trial, 1 trial khác nhau) nên không kiểm định thống kê.
 - **Kết luận có thể đảo lại** nếu: ticket chứa thông tin đúng mà DB thiếu (khi đó agent đọc ticket có lợi thế); claim cần nhiều bước tra cứu song song (lợi thế của orchestrator); hoặc chi phí model call giảm mạnh so với tool call.
-- **Chưa làm:** tự kiểm `student_drop/` khi được cung cấp. Bonus chưa đăng ký.
+- **Tự kiểm hidden:** chạy trên `student_drop/` khi được cung cấp.
+- **Bonus B3:** nhóm đã triển khai verifier bằng code cho swarm và so sánh với `swarm` và `workflow` trên tập public và tập đối kháng. [Báo cáo bonus B3](bonus_report.md)
 
 ## 8. Tài liệu tham khảo
 
