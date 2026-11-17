@@ -13,7 +13,7 @@
 | STT | Họ tên | MSSV | Email | GitHub | Vai trò |
 | --: | ------ | ---- | ----- | ------ | ------- |
 |   1 | Phạm Thế Hùng | 2A202603778 |  26ai.hungpt5@vinuni.edu.vn | `thehung1406` | `workflow`, tích hợp và nộp bài |
-|   2 | Phạm Đức Vinh | 2A202603849 | 26ai.vinhpd@vinuni.edu.vn | `vindpd203` | `single`, báo cáo nhóm và research card |
+|   2 | Phạm Đức Vinh | 2A202603849 | 26ai.vinhpd@vinuni.edu.vn | `vindpd203` | `single`, báo cáo nhóm, research card và bonus B3 |
 |   3 | Nguyễn Nhật Minh | 2A202603745 | nnhatminh2610@gmail.com | `NhMinh-2610` | `orchestrator`, handoff, trace, audit bảo mật và ADR |
 
 ## Bảng đóng góp
@@ -23,7 +23,7 @@
 | Người | Vai | Commit | Test đã thêm hoặc sửa |
 | --- | --- | --- | --- |
 | Hùng | `workflow`, tích hợp | `3b87b6e` | `test_workflow_rejects_approval_for_another_claim`, `test_workflow_retry_keeps_one_refund_and_audit` |
-| Vinh | `single`, research card R2, báo cáo nhóm | `8ba0422`, `9aa1dd9`, `85c0a35`, `2c2c7c2` | `src/tests/test_team_single.py` (`test_single_quotes_from_order_row_not_ticket`, `test_single_does_not_echo_stored_approval_status`, so sánh swarm seed 55, giới hạn 8 bước) |
+| Vinh | `single`, research card R2, báo cáo nhóm, bonus B3 | `8ba0422`, `9aa1dd9`, `85c0a35`, `2c2c7c2`, `02bda52` | `src/tests/test_team_single.py` (`test_single_quotes_from_order_row_not_ticket`, `test_single_does_not_echo_stored_approval_status`, so sánh swarm seed 55, giới hạn 8 bước); `src/tests/test_bonus_swarm_verified.py` (20 test B3) |
 | Minh | `orchestrator`, bảo mật và ADR | `a06249f`, `44d149e` | `src/tests/test_team_orchestrator.py`: 19 ca, gồm bốn ca chống rò secret/PII qua approval status và order status |
 
 ## Cá nhân
