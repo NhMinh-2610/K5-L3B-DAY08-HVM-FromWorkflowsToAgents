@@ -64,6 +64,23 @@ def test_swarm_seed55_pays_where_single_denies(tmp_path):
     assert _ledger_rows(single_store, "C-002") == 0
 
 
+def test_single_does_not_echo_stored_approval_status(tmp_path):
+    """The host denies with reason approval_<status>; a crafted status must not reach the result or trace."""
+    store = _store(tmp_path, "single-c001-status.sqlite")
+    conn = connect(store)
+    with conn:
+        conn.execute("UPDATE approvals SET status = 'CANARY_SECRET_STATUS' WHERE approval_id = 'A-001'")
+    conn.close()
+
+    result = SHAPES["single"]("C-001", seed=11, store_path=store)
+
+    assert result.status == "denied"
+    assert result.error_reason == "policy_denied"
+    assert _ledger_rows(store, "C-001") == 0
+    assert "CANARY_SECRET" not in str(result.as_dict())
+    assert "CANARY_SECRET" not in Path(result.trace_path).read_text(encoding="utf-8")
+
+
 def test_single_stays_within_step_cap(tmp_path):
     store = _store(tmp_path, "single-c001.sqlite")
     result = SHAPES["single"]("C-001", seed=11, store_path=store)
