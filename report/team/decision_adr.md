@@ -4,7 +4,7 @@ Quyết định dựa trên benchmark public của commit triển khai dưới �
 liệu không phải điểm hidden chính thức.
 
 - Shape chọn: workflow
-- Commit hash: 44d149e
+- Commit hash: 53500fe
 - Run id dẫn chứng: R-workflow-C-001-s11; R-workflow-C-014-s55; R-orchestrator-C-001-s11; R-swarm-C-002-s55 (src/reports/benchmark.json)
 - Pass rate / pass^5 / seed min-max / variance: public 1.0 / 1.0 / 1.0–1.0 / 0.0; 14 claim × 5 seed, 70/70 trial
 - Cost per success (mô phỏng, VND): 34.285714285714285
