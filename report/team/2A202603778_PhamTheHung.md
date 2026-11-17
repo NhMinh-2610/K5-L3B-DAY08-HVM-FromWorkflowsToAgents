@@ -19,9 +19,9 @@ Shape A `workflow`, tích hợp ba shape, chạy crash suite và benchmark công
 
 ## 4. Bằng chứng
 
-- Python 3.13.17. Sau khi tích hợp `workflow` và `single`, bộ pytest mặc định có 64 test pass. Ma trận public của `workflow` đạt 62/62, gồm retry và crash/resume.
-- [Kết quả crash suite](../../src/reports/crash.json) đạt `20/20`.
-- Benchmark public trong lúc tích hợp cho `workflow` đạt 70/70 trial, `pass^5 = 1.0`, seed variance `0.0`, cost mô phỏng `34,29 VND` mỗi trial thành công. Run id dẫn chứng `R-workflow-C-001-s11`. Số liệu nhóm sẽ lấy từ lần chạy trên commit đã tích hợp đủ ba shape.
+- Kiểm tra commit tích hợp `f1f5ede` trên Windows với Python 3.13.17. Bộ pytest mặc định có 84 test pass, ma trận public có 248 test pass. Trong đó `workflow` đạt 62/62, gồm T11 (chạy lại) và T12 (chạy lại sau crash).
+- Chạy lại crash suite đạt `20/20`. [Kết quả crash suite](../../src/reports/crash.json)
+- Benchmark public cho `workflow` đạt 70/70 trial trên 14 claim và 5 seed, `pass^5 = 1.0`, seed variance `0.0`, chi phí mô phỏng `34,29 VND` mỗi trial thành công. Run ID dẫn chứng `R-workflow-C-001-s11`. [Kết quả benchmark](../../src/reports/benchmark.json)
 
 ## 5. Công cụ AI đã dùng
 

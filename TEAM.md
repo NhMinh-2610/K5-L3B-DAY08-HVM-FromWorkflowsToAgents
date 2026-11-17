@@ -3,7 +3,7 @@
 ## Thông tin nhóm
 
 - Tên nhóm: HVM
-- Lớp: L3B theo tên repo hiện tại, chờ coach xác nhận mã lớp dùng khi nộp.
+- Lớp: L3B (mã lớp dùng khi nộp của nhóm HVM).
 - Repo nhóm: [K5-L3B-DAY08-HVM-FromWorkflowsToAgents](https://github.com/NhMinh-2610/K5-L3B-DAY08-HVM-FromWorkflowsToAgents)
 - Nhánh nộp: `main`
 - Commit kiểm chứng code và test: `44d149e` (trùng ADR).
