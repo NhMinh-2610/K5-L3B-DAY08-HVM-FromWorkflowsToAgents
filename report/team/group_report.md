@@ -2,12 +2,12 @@
 
 Tối đa 5 trang ngoài phụ lục. Số liệu lấy từ file trong `src/reports/`, không chép tay từ terminal.
 
-> **NHÁP.** Các chỗ `[TODO …]` chờ orchestrator (Minh), `benchmark.json` và `crash.json` (Hùng), ADR (Minh).
+> **NHÁP.** Các chỗ `[TODO …]` còn lại chờ: commit chốt (Hùng), tự kiểm `student_drop/` (Minh), khó khăn riêng của Hùng và Minh.
 
 ## 1. Thông tin nhóm
 
 - Tên nhóm: HVM
-- Thành viên: xem `TEAM.md`. Hùng (workflow, tích hợp), Phạm Đức Vinh (single, research, báo cáo), Nguyễn Nhật Minh (orchestrator, bảo mật, ADR).
+- Thành viên: xem `TEAM.md`. Phạm Thế Hùng (workflow, tích hợp), Phạm Đức Vinh (single, research, báo cáo), Nguyễn Nhật Minh (orchestrator, bảo mật, ADR).
 - Commit chốt (trùng `report/team/decision_adr.md`): [TODO Hùng điền sau khi chốt]
 
 ## 2. Mục tiêu và cách tiếp cận
@@ -64,7 +64,15 @@ Trace ghi: tên tool, order view (chỉ các field trong `ORDER_FIELDS`), quote,
 
 ### C — `orchestrator` (Minh)
 
-[TODO Minh: cách dựng handoff bằng `make_handoff` (field allowlist, tool chỉ đọc), `run_readonly_investigators`, orchestrator tính quote và gọi host, trace ghi handoff đã sanitize chứ không ghi parent context.]
+Một orchestrator lập kế hoạch và giữ quyền ghi tiền, các investigator chỉ có tool đọc:
+
+1. **Orchestrator đọc claim** bằng `get_claim_view`. Không có claim thì `failed`. Không có `order_id` thì `needs_info`.
+2. **Dựng handoff** bằng `make_handoff`, gồm `task="check_applicable_policy"`, `facts={}` và `allowed_tools=["lookup_order", "lookup_policy", "lookup_refund_history"]`. Handoff không mang ticket, parent context, header hay tool ghi.
+3. **Chạy investigator** qua `run_readonly_investigators`. Investigator tự lấy `order_id` từ claim và dùng `dispatch(..., worker=True)`, nên mọi tool không nằm trong `READONLY_TOOLS` đều bị chặn.
+4. **Orchestrator quyết định.** Không thấy đơn thì `escalated`. Nếu thấy, orchestrator tính quote bằng `compute_compensation` từ order view của investigator, rồi gọi `issue_refund` với quote đầy đủ. Trace được flush **trước** khi ghi tiền, nên kể cả khi crash vẫn còn trace an toàn.
+5. **Model:** 1–2 model call cho mỗi claim (`plan` và `draft`). Prompt chỉ chứa nhãn trạng thái, không chứa ticket. Model không quyết số tiền.
+
+Trace ghi lần lượt các event `claim`, `handoff`, `investigator`, `quote`, `refund_request`, `refund_outcome`, `decision`. Event `claim` chỉ có `found` và `has_order_id`. Event `investigator` chỉ có `visible`, số policy và `refunded_vnd`, không ghi `order_id`, carrier hay dữ liệu cá nhân. Chi tiết allowlist và phạm vi kiểm chứng nằm trong `report/team/orchestrator_security.md`.
 
 ### D — `swarm` (có sẵn)
 
@@ -72,7 +80,7 @@ Các peer gọi thêm model. Ở seed chia hết cho 5, swarm tin số ngày tr�
 
 ### Crash và idempotency
 
-Cả ba shape truyền `crash_at` vào `issue_refund` và không bắt `InjectedCrash`. Shape có thể ghi trace trước rồi ném lỗi tiếp. Khi chạy lại, host trả `idempotent_replay` theo khóa `refund:{claim_id}`, nên ledger vẫn chỉ có một dòng và một audit `refund_committed`. Trên ma trận student, T11 và T12 xanh với `workflow` và `single`. [TODO: orchestrator]
+Cả ba shape truyền `crash_at` vào `issue_refund` và không bắt `InjectedCrash`. Shape có thể ghi trace trước rồi ném lỗi tiếp. Khi chạy lại, host trả `idempotent_replay` theo khóa `refund:{claim_id}`, nên ledger vẫn chỉ có một dòng và một audit `refund_committed`. Trên ma trận student (248 passed), T11 và T12 xanh với cả `workflow`, `single` và `orchestrator`. Test nhóm của orchestrator (`src/tests/test_team_orchestrator.py`) kiểm thêm cả 3 điểm crash.
 
 ## 4. Kết quả
 
@@ -169,9 +177,9 @@ Quyết định kiến trúc và lý do: xem `report/team/decision_adr.md`. Phi�
 
 Chi tiết đóng góp của từng thành viên nằm trong `TEAM.md` (bảng đóng góp) và báo cáo cá nhân `report/team/MSSV_HoTen.md`:
 
-- Hùng: `report/team/[TODO]`
-- Vinh: `report/team/2A202603849_PhamDucVinh.md`
-- Minh: `report/team/[TODO]`
+- Phạm Thế Hùng: `report/team/2A202603778_PhamTheHung.md`
+- Phạm Đức Vinh: `report/team/2A202603849_PhamDucVinh.md`
+- Nguyễn Nhật Minh: `report/team/2A202603745_NguyenNhatMinh.md`
 
 ## 7. Hạn chế và hướng cải thiện
 
