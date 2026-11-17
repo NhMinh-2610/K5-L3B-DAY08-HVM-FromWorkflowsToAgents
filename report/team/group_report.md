@@ -78,18 +78,52 @@ Cả ba shape truyền `crash_at` vào `issue_refund` và không bắt `Injected
 
 ### Benchmark 4 shape trên bộ public
 
-[TODO sau khi Hùng chạy: `python -m lab8.benchmark --shapes workflow,single,orchestrator,swarm --cases data/public_claims.jsonl --seeds 11,22,33,44,55 --out reports/benchmark.json`. Số liệu lấy từ `by_shape` trong `src/reports/benchmark.json`.]
+Lệnh chạy trong `src/`, trên code đã có đủ ba shape (commit `85c0a35`):
 
-| Shape | Pass rate | pass^5 | Seed min–max | Variance | Cost/success (VND) | Mean / p95 steps |
-| --- | ---: | ---: | --- | ---: | ---: | --- |
-| workflow | | | | | | |
-| single | | | | | | |
-| orchestrator | | | | | | |
-| swarm | | | | | | |
+```text
+python -m lab8.benchmark --shapes workflow,single,orchestrator,swarm --cases data/public_claims.jsonl --seeds 11,22,33,44,55 --out reports/benchmark.json
+```
+
+Điều kiện giữ cố định (`controlled_variables` trong file): 14 claim public, seed `11,22,33,44,55`, MockLLM, ngày policy 2026-11-15, `pricing.yaml`, mỗi trial một SQLite mới. Mỗi shape chạy 70 trial. Số liệu lấy từ `by_shape` trong `src/reports/benchmark.json`:
+
+| Shape | Trial pass | Pass rate | pass^5 | Seed min–max | Variance | Cost/success (VND) | Mean / p95 steps | Model call / trial | Tool call / trial |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | --- | ---: | ---: |
+| workflow | 70/70 | 1,000 | 1,000 | 1,000–1,000 | 0 | 34,29 | 4,43 / 5 | 0,00 | 3,43 |
+| single | 70/70 | 1,000 | 1,000 | 1,000–1,000 | 0 | 32,26 | 4,64 / 5 | 3,93 | 2,79 |
+| orchestrator | 70/70 | 1,000 | 1,000 | 1,000–1,000 | 0 | 57,23 | 6,00 / 7 | 1,93 | 5,57 |
+| swarm | 69/70 | 0,986 | 0,929 | 0,929–1,000 | 0,000816 | 49,57 | 2,80 / 3 | 3,00 | 4,66 |
+
+"Steps" là số event trong trace. Mỗi shape có tracer riêng nên số này không so sánh trực tiếp được với số bước suy luận. Khi so topology, nên đọc cột model call và tool call.
+
+**Nhận xét.**
+
+- **Chất lượng:** cả ba shape nhóm viết đều đạt 70/70, pass^5 = 1 và variance = 0 trên bộ public. Riêng swarm có dao động giữa các seed, do một trial fail duy nhất `R-swarm-C-002-s55` (xem phần ablation bên dưới). Bộ public không phân biệt được workflow, single và orchestrator về chất lượng.
+- **Mức tự chủ:** `workflow` không gọi model lần nào. `single` gọi trung bình 3,93 lần, `orchestrator` 1,93 lần, swarm 3,00 lần.
+- **Cost:**
+  - `orchestrator` đắt nhất trong ba shape của nhóm, khoảng 1,77 lần `single`. Lý do là investigator đọc thêm claim, policy và lịch sử refund (5,57 tool call mỗi trial).
+  - Cost/success của `workflow` (34,29) cao hơn `single` (32,26) là do **cách đếm**, không do topology. `workflow` tính lời gọi `issue_refund` là một tool call, còn `single` và `orchestrator` thì không. Chênh lệch 3,43 − 2,79 = 0,64 tool call mỗi trial khớp đúng với 9/14 claim có đi tới bước `issue_refund`.
+  - Với giá 10 VND mỗi tool call, nếu đếm giống `single` thì `workflow` còn khoảng (2400 − 45 × 10) / 70 ≈ 27,86 VND/success. Con số này thấp hơn `single`. Đây là phép tính lại từ số liệu trong file, không phải số do công cụ sinh.
 
 ### Crash safety
 
-[TODO: `crash_safety` từ `src/reports/crash.json`, yêu cầu `20/20`.]
+`python -m lab8.crash_test --count 20 --out reports/crash.json` cho `crash_safety` = **20/20** (`src/reports/crash.json`). Suite này chủ yếu kiểm host. Phần của từng shape được kiểm bằng T11 (gọi lại cùng claim) và T12 (crash ở `after_effect_before_checkpoint` rồi chạy lại): cả hai xanh trên `workflow`, `single` và `orchestrator` trong ma trận student (248 passed).
+
+### Bảo mật trên bộ public
+
+`python -m tests.audit_team_security --out reports/orchestrator_security.json` quét kết quả, trace, các file cùng tiền tố run id, stdout và stderr của 280 trial (`src/reports/orchestrator_security.json`):
+
+| Shape | Public pass | Secret leak | PII leak | Approval bypass | Lỗi trace contract | Ghi ledger ngoài dự kiến |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| workflow | 70/70 | 0 | 0 | 0 | 0 | 0 |
+| single | 70/70 | 0 | 0 | 0 | 0 | 0 |
+| orchestrator | 70/70 | 0 | 0 | 0 | 0 | 0 |
+| swarm | 69/70 | 0 | 0 | 0 | 0 | 0 |
+
+Ngoài bộ public, `single` có thêm test cài `CANARY_SECRET_STATUS` vào `status` của approval (`test_single_does_not_echo_stored_approval_status`), để kiểm đường lộ dữ liệu qua reason của host.
+
+### Tự kiểm trên `student_drop/`
+
+[TODO Minh: chưa có `student_drop/` tại thời điểm viết. Khi có, chạy lệnh trong ADR, ghi `status_counts` và `leak_suspect_trials`. Không suy ra pass rate từ bộ không nhãn.]
 
 ### Rà approval (CP4, seed 11)
 

@@ -36,8 +36,8 @@
   "by_shape": {
     "workflow": {
       "trials": 70,
-      "public_passed": 0,
-      "not_implemented_trials": 70,
+      "public_passed": 70,
+      "not_implemented_trials": 0,
       "exception_trials": 0,
       "trace_contract_failures": 0,
       "secret_leak_count": 0,
