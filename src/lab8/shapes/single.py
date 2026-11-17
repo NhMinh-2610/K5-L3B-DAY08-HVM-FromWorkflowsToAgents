@@ -29,6 +29,7 @@ from lab8.mock_llm import complete
 from lab8.runtime import run_react
 from lab8.schemas import Budget, RunResult, make_run_id
 from lab8.shapes.common import finish
+from lab8.shapes.workflow import SAFE_DENIAL_REASONS
 from lab8.tools import compute_compensation, tool_cost
 from lab8.trace import Trace
 
@@ -134,6 +135,10 @@ def _run(conn, claim_id: str, *, seed: int, crash_at: str | None) -> RunResult:
         trace.write()
         raise
 
+    if outcome["conflict"]:
+        return done("failed", proposal, "amount_conflict")
     if not outcome["ok"]:
-        return done("failed" if outcome["conflict"] else "denied", proposal, outcome["reason"])
+        # The host builds some reasons from stored data (approval_<status>): keep only known ones.
+        reason = outcome["reason"]
+        return done("denied", proposal, reason if reason in SAFE_DENIAL_REASONS else "policy_denied")
     return done("resolved", proposal)
