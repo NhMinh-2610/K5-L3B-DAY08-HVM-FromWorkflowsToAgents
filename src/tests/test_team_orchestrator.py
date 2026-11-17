@@ -159,3 +159,43 @@ def test_unknown_claim_and_missing_order_have_fresh_traces(public_db):
         assert (result.status, result.error_reason) == (status, reason)
         assert result.proposal_amount == 0 and result.refund_effects == []
         assert check_trace(result.as_dict()) == (True, "ok")
+
+
+@pytest.mark.parametrize("location", ["approval_status", "order_status"])
+@pytest.mark.parametrize("payload_kind", ["parent_secret", "order_pii"])
+def test_untrusted_status_does_not_leak(public_db, tmp_path, monkeypatch, capsys, location, payload_kind):
+    """Database status values must not be echoed through host or quote reasons."""
+    monkeypatch.chdir(tmp_path)
+    conn = connect(public_db)
+    try:
+        if payload_kind == "parent_secret":
+            sensitive = conn.execute(
+                "SELECT parent_secret FROM claims WHERE claim_id = 'C-001'"
+            ).fetchone()["parent_secret"]
+        else:
+            row = conn.execute("SELECT phone, address FROM orders WHERE order_id = 'O-107'").fetchone()
+            sensitive = row["phone"] + " " + row["address"]
+        if location == "approval_status":
+            conn.execute("UPDATE approvals SET status = ? WHERE approval_id = 'A-001'", (sensitive,))
+        else:
+            conn.execute("UPDATE orders SET status = ? WHERE order_id = 'O-107'", (sensitive,))
+        conn.commit()
+    finally:
+        conn.close()
+
+    result = orchestrator.run_claim("C-001", seed=11, store_path=str(public_db))
+    assert result.status == "denied"
+    assert result.proposal_amount == (35000 if location == "approval_status" else 0)
+    assert result.refund_effects == []
+    conn = connect(public_db)
+    try:
+        assert get_refund(conn, "C-001") is None
+        assert committed_audit_count(conn, "C-001") == 0
+    finally:
+        conn.close()
+
+    output = capsys.readouterr()
+    blob = artifact_blob(result.as_dict()) + output.out + output.err
+    assert sensitive not in blob, "Untrusted database status leaked into output"
+    assert result.error_reason == ("policy_denied" if location == "approval_status" else "no_entitlement")
+    assert check_trace(result.as_dict()) == (True, "ok")

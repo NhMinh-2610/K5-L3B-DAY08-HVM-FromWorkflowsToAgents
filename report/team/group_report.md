@@ -1,14 +1,12 @@
 # Báo cáo nhóm — Lab 8 LogiX-VN
 
-Tối đa 5 trang ngoài phụ lục. Số liệu lấy từ file trong `src/reports/`, không chép tay từ terminal.
-
-> **NHÁP.** Các chỗ `[TODO …]` còn lại chờ: commit chốt (Hùng), tự kiểm `student_drop/` (Minh), khó khăn riêng của Hùng và Minh.
+Số liệu trong báo cáo lấy từ các công cụ của lab trên phiên bản đã tích hợp đủ ba shape.
 
 ## 1. Thông tin nhóm
 
 - Tên nhóm: HVM
 - Thành viên: xem `TEAM.md`. Phạm Thế Hùng (workflow, tích hợp), Phạm Đức Vinh (single, research, báo cáo), Nguyễn Nhật Minh (orchestrator, bảo mật, ADR).
-- Commit chốt (trùng `report/team/decision_adr.md`): [TODO Hùng điền sau khi chốt]
+- Commit kiểm chứng (trùng `report/team/decision_adr.md`): `44d149e`.
 
 ## 2. Mục tiêu và cách tiếp cận
 
@@ -35,7 +33,7 @@ Tối đa 5 trang ngoài phụ lục. Số liệu lấy từ file trong `src/rep
 | Việc | Ai quyết |
 | --- | --- |
 | Đọc claim, tra đơn trong phạm vi principal | Code (tool đọc) |
-| Chọn tool đọc tiếp theo | Model (chỉ ở `single` và investigator của `orchestrator`) |
+| Chọn tool đọc tiếp theo | Code trong `decide` của single và danh sách tool trong handoff; MockLLM mô phỏng lời gọi model |
 | Tính quote | Code: `compute_compensation` trên order row |
 | Approval, trần theo đơn, idempotency, ghi ledger | Host: `durability.issue_refund`, một transaction |
 | Soạn câu trả lời | Model, nếu có |
@@ -70,9 +68,13 @@ Một orchestrator lập kế hoạch và giữ quyền ghi tiền, các investi
 2. **Dựng handoff** bằng `make_handoff`, gồm `task="check_applicable_policy"`, `facts={}` và `allowed_tools=["lookup_order", "lookup_policy", "lookup_refund_history"]`. Handoff không mang ticket, parent context, header hay tool ghi.
 3. **Chạy investigator** qua `run_readonly_investigators`. Investigator tự lấy `order_id` từ claim và dùng `dispatch(..., worker=True)`, nên mọi tool không nằm trong `READONLY_TOOLS` đều bị chặn.
 4. **Orchestrator quyết định.** Không thấy đơn thì `escalated`. Nếu thấy, orchestrator tính quote bằng `compute_compensation` từ order view của investigator, rồi gọi `issue_refund` với quote đầy đủ. Trace được flush **trước** khi ghi tiền, nên kể cả khi crash vẫn còn trace an toàn.
-5. **Model:** 1–2 model call cho mỗi claim (`plan` và `draft`). Prompt chỉ chứa nhãn trạng thái, không chứa ticket. Model không quyết số tiền.
+5. **Model:** 1–2 model call cho mỗi claim (`plan` và `draft`). Prompt chứa tên tác vụ cố định hoặc trạng thái và quote, không chứa ticket. Model không quyết số tiền.
 
 Trace ghi lần lượt các event `claim`, `handoff`, `investigator`, `quote`, `refund_request`, `refund_outcome`, `decision`. Event `claim` chỉ có `found` và `has_order_id`. Event `investigator` chỉ có `visible`, số policy và `refunded_vnd`, không ghi `order_id`, carrier hay dữ liệu cá nhân. Chi tiết allowlist và phạm vi kiểm chứng nằm trong `report/team/orchestrator_security.md`.
+
+Reason từ host và hàm quote cũng được lọc qua danh sách mã cố định trước khi
+đưa vào trace và kết quả. Bản vá xử lý cả approval status lẫn order status chứa
+secret hoặc PII, với bốn ca test hồi quy trong test riêng của orchestrator.
 
 ### D — `swarm` (có sẵn)
 
@@ -80,7 +82,7 @@ Các peer gọi thêm model. Ở seed chia hết cho 5, swarm tin số ngày tr�
 
 ### Crash và idempotency
 
-Cả ba shape truyền `crash_at` vào `issue_refund` và không bắt `InjectedCrash`. Shape có thể ghi trace trước rồi ném lỗi tiếp. Khi chạy lại, host trả `idempotent_replay` theo khóa `refund:{claim_id}`, nên ledger vẫn chỉ có một dòng và một audit `refund_committed`. Trên ma trận student (248 passed), T11 và T12 xanh với cả `workflow`, `single` và `orchestrator`. Test nhóm của orchestrator (`src/tests/test_team_orchestrator.py`) kiểm thêm cả 3 điểm crash.
+Cả ba shape truyền `crash_at` vào `issue_refund` và để `InjectedCrash` truyền ra ngoài. Single bắt lỗi để ghi trace rồi ném lại; orchestrator ghi trace trước khi gọi host. Khi chạy lại, host trả `idempotent_replay` theo khóa `refund:{claim_id}`, nên ledger vẫn chỉ có một dòng và một audit `refund_committed`. Ma trận student đạt 248 passed, gồm T11 và T12 trên cả bốn shape. Test riêng của orchestrator kiểm thêm cả 3 điểm crash.
 
 ## 4. Kết quả
 
@@ -128,10 +130,14 @@ python -m lab8.benchmark --shapes workflow,single,orchestrator,swarm --cases dat
 | swarm | 69/70 | 0 | 0 | 0 | 0 | 0 |
 
 Ngoài bộ public, `single` có thêm test cài `CANARY_SECRET_STATUS` vào `status` của approval (`test_single_does_not_echo_stored_approval_status`), để kiểm đường lộ dữ liệu qua reason của host.
+Orchestrator có bốn ca tương tự cho hai nguồn approval status và order status,
+bao gồm cả secret và PII. Cổng test mặc định đạt 84 passed, 248 deselected.
 
 ### Tự kiểm trên `student_drop/`
 
-[TODO Minh: chưa có `student_drop/` tại thời điểm viết. Khi có, chạy lệnh trong ADR, ghi `status_counts` và `leak_suspect_trials`. Không suy ra pass rate từ bộ không nhãn.]
+Chưa có `student_drop/`, nên chưa có kết quả tự kiểm hidden. Khi được cung cấp,
+chạy lệnh trong ADR để kiểm tra status, trace và dấu hiệu rò dữ liệu. Bộ không
+nhãn không cho biết pass rate hidden chính thức.
 
 ### Rà approval (CP4, seed 11)
 
@@ -171,7 +177,8 @@ Quyết định kiến trúc và lý do: xem `report/team/decision_adr.md`. Phi�
 | `run_react` chỉ truyền cho `decide` kết quả của tool gần nhất, agent "quên" claim đã đọc | Lưu dữ kiện vào biến `facts` trong closure của `decide` |
 | `single` bản đầu ghi nguyên reason của host. Host tạo reason dạng `approval_<status>` từ dữ liệu trong DB, nên có thể lộ chuỗi bị cài | Dùng lại allowlist `SAFE_DENIAL_REASONS` của `workflow`. Thêm test cài `CANARY_SECRET_STATUS` vào approval: bỏ bản vá thì test fail, có bản vá thì pass |
 | `git push` ở nhánh cá nhân không làm code xuất hiện trên trang chính của repo | Trang GitHub mặc định hiển thị `main`. Merge nhánh vào `main` (bằng lệnh hoặc PR) rồi mới push |
-| [TODO Hùng / Minh bổ sung] | |
+| Orchestrator ghi nguyên reason chứa status từ DB, làm lộ secret hoặc PII | Lọc reason bằng `SAFE_REASONS`; bốn ca test fail trước bản vá và pass sau bản vá |
+| Windows chặn pytest truy cập thư mục tạm dùng chung (`WinError 5`) | Chạy pytest với `--basetemp=.pytest_cache/tmp` trong `src/` |
 
 ## 6. Tổng hợp đóng góp
 
@@ -186,7 +193,7 @@ Chi tiết đóng góp của từng thành viên nằm trong `TEAM.md` (bảng �
 - **MockLLM không phải model sản xuất.** Latency là `unavailable`. Cost là cost mô phỏng theo `pricing.yaml`, không phải hóa đơn API. Model call của `single` là để tính cost cho công bằng, không phản ánh chất lượng suy luận của một LLM thật.
 - **Lỗi của swarm được cài theo quy tắc `seed % 5 == 0`.** Ablation R2 chứng minh cơ chế gây lỗi, không ước lượng được tần suất. Mẫu nhỏ (70 trial, 1 trial khác nhau) nên không kiểm định thống kê.
 - **Kết luận có thể đảo lại** nếu: ticket chứa thông tin đúng mà DB thiếu (khi đó agent đọc ticket có lợi thế); claim cần nhiều bước tra cứu song song (lợi thế của orchestrator); hoặc chi phí model call giảm mạnh so với tool call.
-- **Chưa làm:** [TODO Minh: tự kiểm trên `student_drop/` cho shape chọn]. Bonus chưa đăng ký.
+- **Chưa làm:** tự kiểm `student_drop/` khi được cung cấp. Bonus chưa đăng ký.
 
 ## 8. Tài liệu tham khảo
 

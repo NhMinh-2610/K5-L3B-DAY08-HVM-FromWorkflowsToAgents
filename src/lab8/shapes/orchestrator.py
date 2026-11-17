@@ -1,19 +1,7 @@
-"""Shape C — orchestrator plus read-only investigators. Student work.
+"""Shape C: read-only investigation, code-based quotes and host-controlled refunds.
 
-1. Build a handoff with `lab8.handoff.make_handoff`. Allowed tools are read-only.
-   Never put parent_secret, raw headers, or the full claim row into facts.
-2. `lab8.runtime.run_readonly_investigators` runs those tools.
-3. The orchestrator quotes from the investigator's order view and calls
-   `durability.issue_refund`. Investigators have no write registry.
-   Pass the full quote; the host subtracts earlier refunds on the same order.
-   `lookup_refund_history` is a read-only tool you may hand to an investigator.
-4. Trace the sanitized handoff, not the parent context.
-
-An LLM summary of the parent context is not a sanitizer. Use the allowlist.
-
-Trace contract v1 (docs/contracts.md): return a trace_path to a JSON file written in this run,
-{"run_id": <same run_id>, "events": [...]}, on every return path including early
-ones. `lab8.trace.Trace` does this; your own tracer is fine if it matches.
+Handoffs contain only allowed fields and tools. Reasons are restricted to fixed
+codes before they reach trace events or RunResult.
 """
 
 from __future__ import annotations
@@ -29,6 +17,21 @@ from lab8.schemas import Budget, RunResult, make_run_id
 from lab8.shapes.common import finish
 from lab8.tools import compute_compensation, get_claim_view, tool_cost
 from lab8.trace import Trace
+
+
+SAFE_REASONS = frozenset({
+    "unknown_claim", "missing_order_id", "missing_order", "not_found",
+    "outside_principal_scope", "no_entitlement", "order_status_cancelled",
+    "order_status_in_transit", "approval_claim_mismatch", "approval_expired",
+    "approval_revoked", "missing_approval", "non_positive_amount",
+    "order_already_refunded", "order_total_changed", "capped_to_zero",
+    "amount_conflict", "committed", "idempotent_replay", "policy_denied",
+})
+
+
+def _safe_reason(reason: str | None, *, fallback: str = "policy_denied") -> str | None:
+    # Host and quote reasons can embed untrusted database values.
+    return reason if reason is None or reason in SAFE_REASONS else fallback
 
 
 def run_claim(
@@ -56,6 +59,7 @@ def _run(
     trace = Trace(make_run_id("orchestrator", claim_id, seed))
 
     def respond(status: str, proposal: int = 0, reason: str | None = None) -> RunResult:
+        reason = _safe_reason(reason)
         # Neither the model nor the trace receives ticket text or raw database rows.
         complete(budget, seed=seed, purpose="draft", prompt=f"status={status};proposal={proposal}")
         trace.add("decision", {"status": status, "proposal_amount": proposal, "reason": reason})
@@ -111,14 +115,15 @@ def _run(
     proposal = int(quote["amount_vnd"])
     trace.add("quote", {"amount_vnd": proposal})
     if proposal <= 0:
-        return respond("denied", reason=quote["reason"])
+        return respond("denied", reason=_safe_reason(quote["reason"], fallback="no_entitlement"))
 
     # Flush before the write so an injected crash still leaves a safe trace.
     trace.add("refund_request", {"proposal_amount": proposal})
     trace.write()
     outcome = issue_refund(conn, claim_id, proposal, crash_at=crash_at)
-    trace.add("refund_outcome", {"ok": outcome["ok"], "reason": outcome["reason"]})
+    reason = _safe_reason(outcome["reason"])
+    trace.add("refund_outcome", {"ok": outcome["ok"], "reason": reason})
     if not outcome["ok"]:
         status = "failed" if outcome["conflict"] else "denied"
-        return respond(status, proposal, outcome["reason"])
+        return respond(status, proposal, reason)
     return respond("resolved", proposal)

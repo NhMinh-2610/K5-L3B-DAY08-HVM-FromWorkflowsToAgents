@@ -33,6 +33,22 @@ Budget. Trace được flush trước khi gọi host để điểm crash vẫn c
 `crash_at` được truyền nguyên vẹn; `InjectedCrash` không bị bắt trong shape.
 Connection đóng trong `finally`, cả khi crash.
 
+## Lọc reason ở đầu ra
+
+Host có thể tạo reason dạng `approval_<status>`; hàm quote có thể tạo reason
+dạng `order_status_<status>`. Nếu status chứa secret hoặc PII, việc ghi nguyên
+reason sẽ làm lộ dữ liệu dù handoff không chứa dữ liệu nhạy cảm.
+
+Orchestrator lọc reason qua `SAFE_REASONS` trước khi ghi `refund_outcome`,
+`decision` và `RunResult.error_reason`. Giá trị không nằm trong danh sách được
+đổi thành `policy_denied` ở nhánh host hoặc `no_entitlement` ở nhánh quote.
+Các mã nghiệp vụ hợp lệ vẫn được giữ để tra cứu nguyên nhân từ chối.
+
+Bốn test hồi quy dùng DB tạm: approval status và order status, mỗi nguồn chứa
+parent secret hoặc phone/address. Trước bản vá, cả bốn ca làm lộ dữ liệu ở kết
+quả và trace. Sau bản vá, cả bốn ca pass; quyết định vẫn là denied và ledger
+không phát sinh refund. Fixture public và các file host không bị sửa.
+
 ## Lệnh tái lập
 
 Chạy trong `src/`, sau khi kích hoạt môi trường ảo:
@@ -52,13 +68,15 @@ Audit bảo mật không thay cho kiểm tra nghiệp vụ: shape stub có thể
 liệu vì chưa làm việc; report ghi riêng `not_implemented_trials` và `public_passed`.
 Đây là bằng chứng public, không phải điểm hidden chính thức.
 
-## Kết quả tại commit triển khai a06249f
+## Kết quả tại commit kiểm chứng 44d149e
 
-- Test nhóm: 15 passed; ma trận orchestrator: 62 passed.
-- Cổng host và test nhóm hiện có: 77 passed, 248 deselected.
+- Cổng mặc định: 84 passed, 248 deselected; gồm 19 ca riêng của orchestrator.
+- Ma trận student: 248 passed, 84 deselected; mỗi shape có 62 ca pass.
 - Audit 4 shape × 14 claim × 5 seed: 280 trial; 0 secret leak, 0 PII leak,
   0 approval bypass, 0 trace contract failures, 0 unexpected ledger trial.
-- Orchestrator pass 70/70 trial public; workflow còn 70 trial stub. Single pass
-  70/70; swarm pass 69/70 (điểm yếu T02/seed 55).
+- Orchestrator, workflow và single pass 70/70 trial public; swarm pass 69/70
+  (điểm yếu T02/seed 55).
 - Suite host + swarm: 20/20; ba cửa sổ crash riêng của orchestrator qua test nhóm.
 - Không có `student_drop/`; chưa có bằng chứng hidden chính thức.
+- Audit chỉ bao phủ tập dữ liệu và đầu ra được quét; không chứng minh an toàn
+  với mọi dữ liệu có thể xuất hiện ngoài phạm vi kiểm thử.

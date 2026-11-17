@@ -6,7 +6,7 @@
 - Lớp: L3B theo tên repo hiện tại, chờ coach xác nhận mã lớp dùng khi nộp.
 - Repo nhóm: [K5-L3B-DAY08-HVM-FromWorkflowsToAgents](https://github.com/NhMinh-2610/K5-L3B-DAY08-HVM-FromWorkflowsToAgents)
 - Nhánh nộp: `main`
-- Commit chốt: chờ tích hợp đủ ba shape.
+- Commit kiểm chứng code và test: `44d149e` (trùng ADR).
 
 ## Thành viên
 
@@ -24,7 +24,7 @@
 | --- | --- | --- | --- |
 | Hùng | `workflow`, tích hợp | `3b87b6e` | `test_workflow_rejects_approval_for_another_claim`, `test_workflow_retry_keeps_one_refund_and_audit` |
 | Vinh | `single`, research card R2, báo cáo nhóm | `8ba0422`, `9aa1dd9`, `85c0a35`, `2c2c7c2` | `src/tests/test_team_single.py` (`test_single_quotes_from_order_row_not_ticket`, `test_single_does_not_echo_stored_approval_status`, so sánh swarm seed 55, giới hạn 8 bước) |
-| Minh | `orchestrator`, bảo mật và ADR | `a06249f` | `src/tests/test_team_orchestrator.py` (secret/PII, approval, 3 điểm crash, retry, conflict và quote đầy đủ) |
+| Minh | `orchestrator`, bảo mật và ADR | `a06249f`, `44d149e` | `src/tests/test_team_orchestrator.py`: 19 ca, gồm bốn ca chống rò secret/PII qua approval status và order status |
 
 ## Cá nhân
 
