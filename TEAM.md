@@ -13,6 +13,7 @@
 | --: | ------ | ---- | ----- | ------ | ------- |
 |   1 |        |      |       |        |         |
 |   2 |        |      |       |        |         |
+|   3 | Nguyễn Nhật Minh | 2A202603745 | nnhatminh2610@gmail.com | NhMinh-2610 | Orchestrator, handoff/trace, audit bảo mật, ADR |
 
 Gợi ý chia vai:
 
@@ -26,6 +27,7 @@ Gợi ý chia vai:
 | Người | Vai | Commit | Test đã thêm hoặc sửa |
 | --- | --- | --- | --- |
 | | | | |
+| Nguyễn Nhật Minh | Orchestrator, bảo mật và ADR | a06249f | `src/tests/test_team_orchestrator.py`: secret/PII, approval, 3 điểm crash, retry, conflict và quote đầy đủ |
 
 ## Cá nhân
 

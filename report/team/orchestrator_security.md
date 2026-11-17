@@ -51,3 +51,14 @@ trị nhạy cảm. Kiểm approval đối chiếu dòng ledger với approval v
 Audit bảo mật không thay cho kiểm tra nghiệp vụ: shape stub có thể không lộ dữ
 liệu vì chưa làm việc; report ghi riêng `not_implemented_trials` và `public_passed`.
 Đây là bằng chứng public, không phải điểm hidden chính thức.
+
+## Kết quả tại commit triển khai a06249f
+
+- Test nhóm: 15 passed; ma trận orchestrator: 62 passed.
+- Cổng host và test nhóm hiện có: 77 passed, 248 deselected.
+- Audit 4 shape × 14 claim × 5 seed: 280 trial; 0 secret leak, 0 PII leak,
+  0 approval bypass, 0 trace contract failures, 0 unexpected ledger trial.
+- Orchestrator pass 70/70 trial public; workflow còn 70 trial stub. Single pass
+  70/70; swarm pass 69/70 (điểm yếu T02/seed 55).
+- Suite host + swarm: 20/20; ba cửa sổ crash riêng của orchestrator qua test nhóm.
+- Không có `student_drop/`; chưa có bằng chứng hidden chính thức.
