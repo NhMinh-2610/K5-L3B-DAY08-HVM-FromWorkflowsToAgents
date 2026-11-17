@@ -3,8 +3,8 @@
 ## 1. Thông tin thành viên
 
 - Họ tên: Phạm Thế Hùng
-- MSSV: B22DCVT229
-- Email: thehung1406@gmail.com
+- MSSV: 2A202603778
+- Email: 26ai.hungpt5@vinuni.edu.vn	
 - GitHub: `thehung1406`
 
 ## 2. Phần việc phụ trách
