@@ -12,7 +12,7 @@
 
 | STT | Họ tên | MSSV | Email | GitHub | Vai trò |
 | --: | ------ | ---- | ----- | ------ | ------- |
-|   1 | Phạm Thế Hùng | B22DCVT229 | thehung1406@gmail.com | `thehung1406` | `workflow`, tích hợp và nộp bài |
+|   1 | Phạm Thế Hùng | 2A202603778 |  26ai.hungpt5@vinuni.edu.vn | `thehung1406` | `workflow`, tích hợp và nộp bài |
 |   2 | Vinh | | | `vindpd203` | `single`, báo cáo nhóm và research card |
 |   3 | Nguyễn Nhật Minh | | | `NhMinh-2610` | `orchestrator`, bảo mật và ADR |
 
