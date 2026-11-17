@@ -33,7 +33,8 @@
 
 - Commit `8ba0422`: `feat(single): ReAct shape with read-only tools and team test`.
 - Commit `9aa1dd9`: `research(R2): swarm ticket-delay ablation and research card`.
-- Commit vá lỗ hổng reason và thêm test: *(điền hash sau khi commit)*.
+- Commit `85c0a35`: `fix(single): filter host denial reasons; add personal and draft group report`. Đây là commit vá lỗ hổng reason, kèm test mới.
+- Commit `2c2c7c2`: `docs(report): fill results section; regenerate benchmark and security audit with workflow implemented`. Commit này điền mục 4 của báo cáo nhóm và sinh lại `benchmark.json`, `orchestrator_security.json` bằng công cụ, vì bản cũ chạy khi `workflow` còn là stub.
 - Ma trận student: `python -m pytest -q -m student -o addopts= -k "single and not workflow and not orchestrator and not swarm"` cho **62 passed**, gồm T11 và T12.
 - `python -m lab8.check_submission`: `[ OK ] shape single: format đúng, 12/12 claim public pass ở seed 11`.
 - Ablation R2 (`src/reports/r2_ablation.json`):
